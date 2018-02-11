@@ -13,8 +13,14 @@ using Eigen::VectorXd;
 class UKF {
 public:
 
+  std::ofstream NISvals_radar_;
+  std::ofstream NISvals_laser_;
+
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
+
+  // previous timestamp
+  long long previous_timestamp_;
 
   ///* if this is false, laser measurements will be ignored (except for init)
   bool use_laser_;
@@ -25,11 +31,44 @@ public:
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   VectorXd x_;
 
+  // Augmented state vector
+  VectorXd x_aug_;
+
+  // Utility vector for updates
+  VectorXd deltax_;
+
   ///* state covariance matrix
   MatrixXd P_;
 
+  // Augmented state covariance matrix
+  MatrixXd P_aug_;
+
+  // Matrix such that L_^T L_ = P_aug_; used for constructing sigma points
+  MatrixXd L_;
+
+  // Augmented sigma points matrix
+  MatrixXd Xsig_aug_;
+
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
+
+  // Predicted state mean in radar measurement space
+  VectorXd z_pred_radar_;
+
+  // Utility variable for radar update
+  VectorXd deltaz_radar_;
+
+  // predicted sigma points in radar measurement space
+  MatrixXd Zsig_radar_;
+
+  // Predicted state mean in lidar measurement space
+  VectorXd z_pred_laser_;
+
+  // Utility variable for lidar update
+  VectorXd deltaz_laser_;
+
+  // predicted sigma points in lidar measurement space
+  MatrixXd Zsig_laser_;
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -46,6 +85,18 @@ public:
   ///* Laser measurement noise standard deviation position2 in m
   double std_laspy_;
 
+  // Laser measurement noise covariance matrix
+  MatrixXd R_laser_;
+
+  // Laser measurement covariance matrix
+  MatrixXd S_laser_;
+
+  // Cross correlation matrix for laser measurements
+  MatrixXd Tc_laser_;
+
+  // Kalman gain for laser measurements
+  MatrixXd K_laser_;
+
   ///* Radar measurement noise standard deviation radius in m
   double std_radr_;
 
@@ -54,6 +105,18 @@ public:
 
   ///* Radar measurement noise standard deviation radius change in m/s
   double std_radrd_ ;
+
+  // Radar measurement noise covariance matrix
+  MatrixXd R_radar_;
+
+  // Radar measurement covariance matrix
+  MatrixXd S_radar_;
+
+  // Cross correlation matrix for radar measurements
+  MatrixXd Tc_radar_;
+
+  // Kalman gain for radar measurements
+  MatrixXd K_radar_;
 
   ///* Weights of sigma points
   VectorXd weights_;
@@ -64,10 +127,19 @@ public:
   ///* Augmented state dimension
   int n_aug_;
 
+  // Dimension of laser measurement space
+  int n_laser_;
+
+  // Dimension of radar measurement space
+  int n_radar_;
+
   ///* Sigma point spreading parameter
   double lambda_;
 
-
+  // The project description mentioned that the following variables
+  // should appear in the header.
+  double NIS_radar_;
+  double NIS_laser_;
   /**
    * Constructor
    */
